@@ -68,6 +68,18 @@ export function canonicalModel(input: string, used: string[] = []) {
   return catalogByKey.get(key) ?? used.find((u) => modelKey(u) === key) ?? clean;
 }
 
+/** Finds the most specific known model mentioned anywhere in free text (e.g. an ad title). */
+export function detectModel(text: string, used: string[] = []) {
+  const hay = modelKey(text);
+  let best: { key: string; value: string } | undefined;
+  const consider = (key: string, value: string) => {
+    if (key.length >= 4 && hay.includes(key) && (!best || key.length > best.key.length)) best = { key, value };
+  };
+  for (const [key, value] of catalogByKey) consider(key, value);
+  for (const u of used) consider(modelKey(u), u);
+  return best?.value;
+}
+
 /** User's own models first (most used first), then the built-in catalog. */
 export function modelSuggestions(used: string[]): Suggestion[] {
   const counts = new Map<string, { value: string; n: number }>();

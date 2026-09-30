@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { KanbanSquare, Plus, Rows3, Smartphone } from "lucide-react";
+import { KanbanSquare, Link2, Plus, Rows3, Smartphone } from "lucide-react";
 import { useData } from "../data/store";
 import { useEditors } from "../components/editors";
 import { useFeedback } from "../components/feedback";
@@ -73,6 +73,9 @@ export function Inventory() {
                 { value: "board", label: <KanbanSquare />, title: "Board" },
               ]}
             />
+            <Button variant="secondary" onClick={() => open({ kind: "willhaben" })}>
+              <Link2 /> willhaben
+            </Button>
             <Button onClick={() => open({ kind: "device" })}>
               <Plus /> Add device
             </Button>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router";
-import { Boxes, LayoutDashboard, LogOut, Moon, Plus, Receipt, Settings, Smartphone, Sun, Wrench, type LucideIcon } from "lucide-react";
+import { Boxes, LayoutDashboard, Link2, LogOut, Moon, Plus, Receipt, Settings, Smartphone, Sun, Wrench, type LucideIcon } from "lucide-react";
 import { useAuth } from "../data/auth";
 import { useData } from "../data/store";
 import { useEditors } from "../components/editors";
@@ -45,6 +45,7 @@ function NewMenu({ compact }: { compact?: boolean }) {
 
   const items: [string, LucideIcon, () => void][] = [
     ["Device", Smartphone, () => openEditor({ kind: "device" })],
+    ["From willhaben", Link2, () => openEditor({ kind: "willhaben" })],
     ["Repair job", Wrench, () => openEditor({ kind: "repair" })],
     ["Expense", Receipt, () => openEditor({ kind: "expense" })],
     ["Part", Boxes, () => openEditor({ kind: "part" })],
