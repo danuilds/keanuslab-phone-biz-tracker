@@ -6,6 +6,7 @@ import { FeedbackProvider } from "./components/feedback";
 import { EditorsProvider } from "./components/editors";
 import { AppLayout } from "./layouts/AppLayout";
 import { Landing } from "./pages/Landing";
+import { NoAccess } from "./pages/NoAccess";
 import { Inventory } from "./pages/Inventory";
 import { Repairs } from "./pages/Repairs";
 import { Parts } from "./pages/Parts";
@@ -56,6 +57,7 @@ function Root() {
   const { user, loading } = useAuth();
   if (loading) return <Spinner />;
   if (!user) return <Landing />;
+  if (!user.allowed) return <NoAccess />;
   return (
     <DataProvider>
       <SignedInApp />

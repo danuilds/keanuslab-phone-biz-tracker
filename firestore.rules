@@ -1,8 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function email() {
+      return request.auth.token.email.lower();
+    }
+    function allowEntry() {
+      return /databases/$(database)/documents/allowlist/$(email());
+    }
+    // Access requires a verified email listed in /allowlist (managed by admins in the app).
+    function isAllowed() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(allowEntry());
+    }
+    function isAdmin() {
+      return isAllowed() && get(allowEntry()).data.admin == true;
+    }
     function isOwner(uid) {
-      return request.auth != null && request.auth.uid == uid;
+      return request.auth != null && request.auth.uid == uid && isAllowed();
     }
     function optStr(d, f, max) {
       return !(f in d) || (d[f] is string && d[f].size() <= max);
@@ -96,6 +111,18 @@ service cloud.firestore {
         allow read: if isOwner(uid);
         allow write: if isOwner(uid) && id == 'settings' && validSettings(request.resource.data);
       }
+    }
+
+    match /allowlist/{entry} {
+      // Users may check their own entry (to learn whether they have access); admins manage the list.
+      allow get: if request.auth != null && entry == email();
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+        && entry.matches('^[^@\\s]+@[^@\\s]+$')
+        && request.resource.data.keys().hasOnly(['admin', 'addedBy', 'addedAt'])
+        && request.resource.data.admin is bool
+        && !(entry == email() && request.resource.data.admin == false);
+      allow delete: if isAdmin() && entry != email();
     }
   }
 }

@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut as fbSignOut } from "firebase/auth";
-import { auth, firebaseEnabled } from "../lib/firebase";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut as fbSignOut, type User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db, firebaseEnabled } from "../lib/firebase";
 
 export interface AppUser {
   uid: string;
@@ -8,6 +9,8 @@ export interface AppUser {
   email?: string;
   photoURL?: string;
   demo: boolean;
+  allowed: boolean;
+  admin: boolean;
 }
 
 interface AuthState {
@@ -17,11 +20,27 @@ interface AuthState {
   signIn(): Promise<void>;
   startDemo(): void;
   signOut(): Promise<void>;
+  recheckAccess(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 const DEMO_SESSION_KEY = "phonebiz-demo-session";
-const demoUser: AppUser = { uid: "demo", name: "Demo", demo: true };
+const demoUser: AppUser = { uid: "demo", name: "Demo", demo: true, allowed: true, admin: false };
+
+async function toAppUser(u: User): Promise<AppUser> {
+  let allowed = false;
+  let admin = false;
+  if (db && u.email) {
+    try {
+      const entry = await getDoc(doc(db, "allowlist", u.email.toLowerCase()));
+      allowed = entry.exists();
+      admin = entry.data()?.admin === true;
+    } catch {
+      allowed = false;
+    }
+  }
+  return { uid: u.uid, name: u.displayName || u.email || "You", email: u.email ?? undefined, photoURL: u.photoURL ?? undefined, demo: false, allowed, admin };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(() =>
@@ -31,10 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!auth) return;
-    return onAuthStateChanged(auth, (u) => {
+    return onAuthStateChanged(auth, async (u) => {
       if (u) {
+        setLoading(true);
         localStorage.removeItem(DEMO_SESSION_KEY);
-        setUser({ uid: u.uid, name: u.displayName || u.email || "You", email: u.email ?? undefined, photoURL: u.photoURL ?? undefined, demo: false });
+        setUser(await toAppUser(u));
       } else {
         setUser((cur) => (cur?.demo ? cur : null));
       }
@@ -42,10 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const recheckAccess = useCallback(async () => {
+    if (auth?.currentUser) setUser(await toAppUser(auth.currentUser));
+  }, []);
+
   const value: AuthState = {
     user,
     loading,
     firebaseEnabled,
+    recheckAccess,
     async signIn() {
       if (!auth) return;
       await signInWithPopup(auth, new GoogleAuthProvider());

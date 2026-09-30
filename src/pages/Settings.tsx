@@ -4,6 +4,7 @@ import { Download, FileUp, LogOut, Plus, RotateCcw, Sparkles, Trash2, Upload } f
 import { useAuth } from "../data/auth";
 import { useData } from "../data/store";
 import { useFeedback } from "../components/feedback";
+import { AccessManager } from "../components/AccessManager";
 import { Button, Card, Field, IconButton, Input, Modal, PageHeader, Select } from "../components/ui";
 import { exportCsv, parseCsv, type ParsedImport } from "../lib/csv";
 import { GOAL_METRICS } from "../lib/goals";
@@ -172,6 +173,12 @@ export function SettingsPage() {
             </div>
           </Section>
         ) : null}
+
+        {user?.admin && (
+          <Section id="access" title="Access" text="Only these Google accounts can sign in and use the app.">
+            <AccessManager />
+          </Section>
+        )}
 
         <Section title="Account" text={user?.demo ? "Leave the demo and return to the start page." : "Sign out of this device."}>
           <Button variant="secondary" onClick={() => void signOut()}>
