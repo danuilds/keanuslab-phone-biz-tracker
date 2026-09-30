@@ -3,6 +3,9 @@ name: Deploy to Firebase
 on:
   push:
     branches: [main]
+    # Docs-only changes don't need a redeploy.
+    paths-ignore:
+      - "**.md"
   workflow_dispatch:
 
 # Never run two deploys at once; a newer push waits for the running one.
