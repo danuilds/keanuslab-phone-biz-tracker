@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function optStr(d, f, max) {
+      return !(f in d) || (d[f] is string && d[f].size() <= max);
+    }
+    function reqStr(d, f, max) {
+      return f in d && d[f] is string && d[f].size() > 0 && d[f].size() <= max;
+    }
+    function optMoney(d, f) {
+      return !(f in d) || d[f] == null || (d[f] is number && d[f] >= 0);
+    }
+    function reqMoney(d, f) {
+      return f in d && d[f] is number && d[f] >= 0;
+    }
+    function isDate(d, f) {
+      return f in d && d[f] is string && d[f].matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+    function optIsDate(d, f) {
+      return !(f in d) || d[f] == '' || isDate(d, f);
+    }
+    function partLines(d) {
+      return !('parts' in d) || (d.parts is list && d.parts.size() <= 50);
+    }
+
+    function validDevice(d) {
+      return d.keys().hasOnly(['stockId', 'model', 'storage', 'color', 'imei', 'condition', 'source', 'purchasePrice', 'purchasedAt',
+                               'status', 'parts', 'platform', 'salePrice', 'soldAt', 'saleFees', 'shippingCost', 'notes'])
+        && reqStr(d, 'model', 200)
+        && reqMoney(d, 'purchasePrice')
+        && isDate(d, 'purchasedAt')
+        && d.status in ['Acquired', 'In repair', 'Ready', 'Listed', 'Sold']
+        && optMoney(d, 'salePrice') && optMoney(d, 'saleFees') && optMoney(d, 'shippingCost')
+        && optIsDate(d, 'soldAt')
+        && optStr(d, 'notes', 5000) && optStr(d, 'imei', 100) && optStr(d, 'stockId', 20)
+        && partLines(d);
+    }
+
+    function validRepair(d) {
+      return d.keys().hasOnly(['date', 'completedAt', 'customer', 'contact', 'device', 'issue', 'status', 'parts', 'charged', 'notes'])
+        && isDate(d, 'date')
+        && optIsDate(d, 'completedAt')
+        && reqStr(d, 'customer', 200)
+        && reqStr(d, 'device', 200)
+        && d.status in ['Intake', 'Diagnosing', 'Waiting parts', 'In progress', 'Done', 'Collected']
+        && optMoney(d, 'charged')
+        && optStr(d, 'issue', 5000) && optStr(d, 'notes', 5000)
+        && partLines(d);
+    }
+
+    function validExpense(d) {
+      return d.keys().hasOnly(['date', 'category', 'description', 'amount'])
+        && isDate(d, 'date')
+        && reqStr(d, 'description', 500)
+        && optStr(d, 'category', 100)
+        && reqMoney(d, 'amount');
+    }
+
+    // qtyOnHand may go negative when more parts are used than recorded in stock.
+    function validPart(d) {
+      return d.keys().hasOnly(['name', 'category', 'compatible', 'qtyOnHand', 'unitCost', 'lowStock'])
+        && reqStr(d, 'name', 200)
+        && d.qtyOnHand is number
+        && reqMoney(d, 'unitCost')
+        && reqMoney(d, 'lowStock');
+    }
+
+    function validSettings(d) {
+      return d.keys().hasOnly(['businessName', 'currency', 'goals'])
+        && optStr(d, 'businessName', 80)
+        && (!('goals' in d) || (d.goals is list && d.goals.size() <= 8))
+        && d.currency is string && d.currency.matches('^[A-Z]{3}$');
+    }
+
+    match /users/{uid} {
+      match /devices/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validDevice(request.resource.data);
+      }
+      match /repairs/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validRepair(request.resource.data);
+      }
+      match /expenses/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validExpense(request.resource.data);
+      }
+      match /parts/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validPart(request.resource.data);
+      }
+      match /meta/{id} {
+        allow read: if isOwner(uid);
+        allow write: if isOwner(uid) && id == 'settings' && validSettings(request.resource.data);
+      }
+    }
+  }
+}
