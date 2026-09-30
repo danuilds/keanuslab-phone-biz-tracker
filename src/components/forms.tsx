@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { Trash2 } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
+import { useEditors } from "./editors";
 import { Button, Field, Input, Modal, Select, Textarea } from "./ui";
 import { Combobox } from "./Combobox";
 import { PartsEditor, fromDraftLines, toDraftLines } from "./PartsEditor";
@@ -51,14 +52,15 @@ function Section({ title, children, className }: { title: string; children: Reac
 
 const Grid = ({ children }: { children: ReactNode }) => <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>;
 
-function FormFooter({ formId, onClose, onDelete, saving }: { formId: string; onClose(): void; onDelete?: () => void; saving: boolean }) {
+function FormFooter({ formId, onClose, onDelete, saving, extra }: { formId: string; onClose(): void; onDelete?: () => void; saving: boolean; extra?: ReactNode }) {
   return (
     <>
       {onDelete && (
-        <Button variant="danger" className="mr-auto" onClick={onDelete}>
+        <Button variant="danger" className={extra ? "" : "mr-auto"} onClick={onDelete}>
           <Trash2 /> Delete
         </Button>
       )}
+      {extra && <div className="mr-auto">{extra}</div>}
       <Button variant="secondary" onClick={onClose}>
         Cancel
       </Button>
@@ -97,6 +99,7 @@ function useDeleteFlow(label: string, onClose: () => void) {
 export function DeviceForm({ device, preset, onClose }: { device?: Device; preset?: Partial<Device>; onClose(): void }) {
   const data = useData();
   const models = useModels();
+  const openEditor = useEditors();
   const { run } = useFeedback();
   const src = { ...device, ...preset };
   const [d, set] = useDraft({
@@ -127,9 +130,10 @@ export function DeviceForm({ device, preset, onClose }: { device?: Device; prese
     e.preventDefault();
     setSaving(true);
     const sold = d.status === "Sold";
+    let saved: Device | undefined;
     const ok = await run(
-      () =>
-        data.saveDevice({
+      async () => {
+        saved = await data.saveDevice({
           id: device?.id,
           stockId: device?.stockId,
           model: canonicalModel(d.model, models.used),
@@ -148,15 +152,25 @@ export function DeviceForm({ device, preset, onClose }: { device?: Device; prese
           saleFees: sold ? optNum(d.saleFees) : null,
           shippingCost: sold ? optNum(d.shippingCost) : null,
           notes: d.notes.trim(),
-        }),
+        });
+      },
       device ? "Device updated" : "Device added",
     );
     setSaving(false);
-    if (ok) onClose();
+    if (!ok) return;
+    if (saved && saved.status === "Ready" && device?.status !== "Ready") openEditor({ kind: "listing", record: saved });
+    else onClose();
   };
 
+  const listingButton =
+    device && device.status !== "Sold" ? (
+      <Button variant="ghost" onClick={() => openEditor({ kind: "listing", record: device })} title="Generate ad text from the saved device">
+        <FileText /> Listing text
+      </Button>
+    ) : undefined;
+
   return (
-    <Modal open onClose={onClose} wide title={device ? `Edit ${device.stockId ?? "device"}` : "Add device"} footer={<FormFooter formId="device-form" onClose={onClose} saving={saving} onDelete={device && (() => del(() => data.deleteDevice(device)))} />}>
+    <Modal open onClose={onClose} wide title={device ? `Edit ${device.stockId ?? "device"}` : "Add device"} footer={<FormFooter formId="device-form" onClose={onClose} saving={saving} onDelete={device && (() => del(() => data.deleteDevice(device)))} extra={listingButton} />}>
       <form id="device-form" onSubmit={submit} className="divide-y divide-zinc-100 dark:divide-zinc-800">
         <Section title="Device">
           <Grid>

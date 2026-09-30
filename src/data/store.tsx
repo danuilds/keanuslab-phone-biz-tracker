@@ -110,12 +110,13 @@ function createActions(backend: Backend, state: State) {
   const withId = <T extends { id?: string }>(rec: T) => ({ ...rec, id: rec.id || backend.newId() });
 
   return {
-    async saveDevice(rec: New<Device>) {
+    async saveDevice(rec: New<Device>): Promise<Device> {
       const prev = rec.id ? state.devices.find((d) => d.id === rec.id) : undefined;
       const data = withId(rec);
       data.stockId = rec.stockId || prev?.stockId || nextStockIds(state.devices, 1)[0];
       if (data.status === "Sold" && !data.soldAt) data.soldAt = today();
       await backend.commit([{ type: "set", col: "devices", id: data.id, data }, ...stockOps(prev?.parts ?? [], data.parts, state.parts)]);
+      return data;
     },
     async deleteDevice(d: Device) {
       await backend.commit([{ type: "delete", col: "devices", id: d.id }, ...stockOps(d.parts, [], state.parts)]);

@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { DeviceForm, ExpenseForm, PartForm, RepairForm, RestockForm } from "./forms";
 import { WillhabenImport } from "./WillhabenImport";
+import { ListingText } from "./ListingText";
 import type { Device, Expense, Part, Repair } from "../lib/types";
 
 type Editor =
   | { kind: "device"; record?: Device; preset?: Partial<Device> }
   | { kind: "willhaben" }
+  | { kind: "listing"; record: Device }
   | { kind: "repair"; record?: Repair; preset?: Partial<Repair> }
   | { kind: "expense"; record?: Expense }
   | { kind: "part"; record?: Part }
@@ -23,6 +25,7 @@ export function EditorsProvider({ children }: { children: ReactNode }) {
       {children}
       {editor?.kind === "device" && <DeviceForm key={editor.record?.id} device={editor.record} preset={editor.preset} onClose={close} />}
       {editor?.kind === "willhaben" && <WillhabenImport onClose={close} onContinue={(preset) => setEditor({ kind: "device", preset })} />}
+      {editor?.kind === "listing" && <ListingText key={editor.record.id} device={editor.record} onClose={close} />}
       {editor?.kind === "repair" && <RepairForm key={editor.record?.id} repair={editor.record} preset={editor.preset} onClose={close} />}
       {editor?.kind === "expense" && <ExpenseForm expense={editor.record} onClose={close} />}
       {editor?.kind === "part" && <PartForm part={editor.record} onClose={close} />}

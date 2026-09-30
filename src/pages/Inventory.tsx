@@ -53,9 +53,13 @@ export function Inventory() {
     { key: "profit", header: "Profit", align: "right", sort: (d) => deviceProfit(d) ?? -Infinity, render: (d) => <Profit value={deviceProfit(d)} /> },
   ];
 
-  const move = (d: Device, to: DeviceStatus) => {
+  const move = async (d: Device, to: DeviceStatus) => {
     if (to === "Sold") return open({ kind: "device", record: d, preset: { status: "Sold" } });
-    void run(() => saveDevice({ ...d, status: to }), `${d.model} → ${to}`);
+    let saved: Device | undefined;
+    const ok = await run(async () => {
+      saved = await saveDevice({ ...d, status: to });
+    }, `${d.model} → ${to}`);
+    if (ok && saved && to === "Ready") open({ kind: "listing", record: saved });
   };
 
   return (
