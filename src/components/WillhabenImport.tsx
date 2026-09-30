@@ -23,7 +23,6 @@ export function WillhabenImport({ onClose, onContinue }: { onClose(): void; onCo
       draft.adCode && `willhaben-Code: ${draft.adCode}`,
       draft.title && `Ad: ${draft.title}`,
       draft.price != null && `Asking price: ${fmt(draft.price)}`,
-      draft.battery != null && `Battery health: ${draft.battery}%`,
       draft.unlocked && "Unlocked (no SIM lock)",
     ]
       .filter(Boolean)
@@ -33,6 +32,7 @@ export function WillhabenImport({ onClose, onContinue }: { onClose(): void; onCo
       storage: draft.storage,
       color: draft.color,
       condition: draft.condition,
+      batteryBought: draft.battery,
       purchasePrice: draft.price,
       purchasedAt: today(),
       source: "willhaben",

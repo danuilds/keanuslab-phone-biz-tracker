@@ -23,6 +23,8 @@ export interface Device {
   color?: string;
   imei?: string;
   condition?: string;
+  batteryBought?: number | null;
+  batterySold?: number | null;
   source?: string;
   purchasePrice: number;
   purchasedAt: string;

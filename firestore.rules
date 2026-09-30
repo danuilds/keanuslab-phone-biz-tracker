@@ -31,6 +31,9 @@ service cloud.firestore {
     function reqMoney(d, f) {
       return f in d && d[f] is number && d[f] >= 0;
     }
+    function optPct(d, f) {
+      return !(f in d) || d[f] == null || (d[f] is number && d[f] >= 0 && d[f] <= 100);
+    }
     function isDate(d, f) {
       return f in d && d[f] is string && d[f].matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
     }
@@ -42,7 +45,7 @@ service cloud.firestore {
     }
 
     function validDevice(d) {
-      return d.keys().hasOnly(['stockId', 'model', 'storage', 'color', 'imei', 'condition', 'source', 'purchasePrice', 'purchasedAt',
+      return d.keys().hasOnly(['stockId', 'model', 'storage', 'color', 'imei', 'condition', 'batteryBought', 'batterySold', 'source', 'purchasePrice', 'purchasedAt',
                                'status', 'parts', 'platform', 'salePrice', 'soldAt', 'saleFees', 'shippingCost', 'notes'])
         && reqStr(d, 'model', 200)
         && reqMoney(d, 'purchasePrice')
@@ -51,6 +54,7 @@ service cloud.firestore {
         && optMoney(d, 'salePrice') && optMoney(d, 'saleFees') && optMoney(d, 'shippingCost')
         && optIsDate(d, 'soldAt')
         && optStr(d, 'notes', 5000) && optStr(d, 'imei', 100) && optStr(d, 'stockId', 20)
+        && optPct(d, 'batteryBought') && optPct(d, 'batterySold')
         && partLines(d);
     }
 

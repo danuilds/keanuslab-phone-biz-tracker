@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
-import { useData } from "../data/store";
 import { Button, Field, Input, Modal, Textarea } from "./ui";
 import { buildListing } from "../lib/listing";
 import type { Device } from "../lib/types";
@@ -23,8 +22,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 }
 
 export function ListingText({ device, onClose }: { device: Device; onClose(): void }) {
-  const { parts } = useData();
-  const [listing] = useState(() => buildListing(device, parts));
+  const [listing] = useState(() => buildListing(device));
   const [title, setTitle] = useState(listing.title);
   const [description, setDescription] = useState(listing.description);
 

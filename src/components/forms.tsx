@@ -22,6 +22,7 @@ import {
 } from "../lib/types";
 
 const optNum = (s: string) => (s.trim() === "" ? null : num(s));
+const optPct = (s: string) => (s.trim() === "" ? null : Math.min(100, Math.max(0, Math.round(num(s)))));
 const str = (v: number | null | undefined) => (v == null ? "" : String(v));
 
 const storageSuggestions = STORAGE_OPTIONS.map((s) => ({ value: s, search: s.toLowerCase() }));
@@ -108,6 +109,8 @@ export function DeviceForm({ device, preset, onClose }: { device?: Device; prese
     color: src.color ?? "",
     imei: src.imei ?? "",
     condition: src.condition ?? CONDITIONS[1],
+    batteryBought: str(src.batteryBought),
+    batterySold: str(src.batterySold),
     source: src.source ?? "",
     purchasePrice: str(src.purchasePrice),
     purchasedAt: src.purchasedAt ?? today(),
@@ -141,6 +144,8 @@ export function DeviceForm({ device, preset, onClose }: { device?: Device; prese
           color: d.color.trim(),
           imei: d.imei.trim(),
           condition: d.condition,
+          batteryBought: optPct(d.batteryBought),
+          batterySold: optPct(d.batterySold),
           source: d.source.trim(),
           purchasePrice: num(d.purchasePrice),
           purchasedAt: d.purchasedAt,
@@ -179,6 +184,8 @@ export function DeviceForm({ device, preset, onClose }: { device?: Device; prese
             <Field label="Colour">{(id) => <Input id={id} value={d.color} onChange={(e) => set("color", e.target.value)} />}</Field>
             <Field label="IMEI / Serial">{(id) => <Input id={id} value={d.imei} onChange={(e) => set("imei", e.target.value)} />}</Field>
             <Field label="Condition">{(id) => <Select id={id} options={CONDITIONS} value={d.condition} onChange={(e) => set("condition", e.target.value)} />}</Field>
+            <Field label="Battery % when bought">{(id) => <Input id={id} type="number" inputMode="numeric" min="0" max="100" step="1" placeholder="e.g. 82" value={d.batteryBought} onChange={(e) => set("batteryBought", e.target.value)} />}</Field>
+            <Field label="Battery % when sold" hint="Used in the listing text.">{(id) => <Input id={id} type="number" inputMode="numeric" min="0" max="100" step="1" placeholder="e.g. 100" value={d.batterySold} onChange={(e) => set("batterySold", e.target.value)} />}</Field>
           </Grid>
         </Section>
         <Section title="Purchase">

@@ -46,6 +46,20 @@ export function Inventory() {
       ),
     },
     { key: "status", header: "Status", sort: (d) => DEVICE_STATUSES.indexOf(d.status), render: (d) => <Badge tone={deviceTone[d.status]} dot>{d.status}</Badge> },
+    {
+      key: "battery",
+      header: "Battery",
+      align: "right",
+      sort: (d) => d.batterySold ?? d.batteryBought ?? -1,
+      render: (d) =>
+        d.batteryBought == null && d.batterySold == null ? (
+          <span className="text-zinc-400">—</span>
+        ) : (
+          <span className="text-zinc-500">
+            {d.batteryBought ?? "?"}%{d.batterySold != null && <span className="text-zinc-900 dark:text-zinc-100"> → {d.batterySold}%</span>}
+          </span>
+        ),
+    },
     { key: "bought", header: "Bought", sort: (d) => d.purchasedAt, render: (d) => <span className="text-zinc-500">{fmtDate(d.purchasedAt)}</span> },
     { key: "days", header: "Days", align: "right", sort: (d) => daysInStock(d), render: (d) => <span className="text-zinc-500">{daysInStock(d)}</span> },
     { key: "cost", header: "Total cost", align: "right", sort: deviceCost, render: (d) => fmt(deviceCost(d)) },
