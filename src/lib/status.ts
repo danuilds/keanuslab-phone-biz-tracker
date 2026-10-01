@@ -7,7 +7,10 @@ export const deviceTone: Record<DeviceStatus, Tone> = {
   Ready: "sky",
   Listed: "violet",
   Sold: "emerald",
+  "Handed over": "emerald",
 };
+
+export const isSoldStatus = (status: DeviceStatus) => status === "Sold" || status === "Handed over";
 
 export const repairTone: Record<RepairStatus, Tone> = {
   Intake: "zinc",
