@@ -32,7 +32,7 @@ export function Inventory() {
   }, [devices, q, status, view]);
 
   const inStock = devices.filter((d) => !isSoldStatus(d.status));
-  const awaitingHandover = devices.filter((d) => d.status === "Sold").length;
+  const awaitingHandover = devices.filter((d) => d.status === "Awaiting handover").length;
 
   const columns: Column<Device>[] = [
     { key: "stockId", header: "ID", sort: (d) => stockNumber(d.stockId), render: (d) => <span className="font-mono text-xs text-zinc-500">{d.stockId ?? "—"}</span> },
@@ -73,7 +73,7 @@ export function Inventory() {
   ];
 
   const move = async (d: Device, to: DeviceStatus) => {
-    if (to === "Sold" || (to === "Handed over" && !isSoldStatus(d.status))) return open({ kind: "device", record: d, preset: { status: to } });
+    if (isSoldStatus(to) && !isSoldStatus(d.status)) return open({ kind: "device", record: d, preset: { status: to } });
     let saved: Device | undefined;
     const ok = await run(async () => {
       saved = await saveDevice({ ...d, status: to });

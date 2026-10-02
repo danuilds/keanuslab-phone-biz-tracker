@@ -125,7 +125,7 @@ export function Dashboard() {
   }, [data]);
 
   const stock = data.devices.filter((d) => !isSoldStatus(d.status));
-  const handover = data.devices.filter((d) => d.status === "Sold");
+  const handover = data.devices.filter((d) => d.status === "Awaiting handover");
   const stale = stock.filter((d) => daysInStock(d) > 30).sort((a, b) => daysInStock(b) - daysInStock(a));
   const low = data.parts.filter(isLowStock);
   const pickup = data.repairs.filter((r) => r.status === "Done");

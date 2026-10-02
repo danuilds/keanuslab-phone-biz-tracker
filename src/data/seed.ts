@@ -28,7 +28,7 @@ export function buildSeed(newId: () => string): Op[] {
     ["iPhone 11 64GB", 110, 80, "Handed over", 199, 62, []],
     ["Pixel 7 128GB", 160, 60, "Handed over", 269, 41, []],
     ["iPhone 12 64GB", 145, 45, "Handed over", 279, 20, []],
-    ["iPhone 14 128GB", 330, 30, "Sold", 499, 9, []],
+    ["iPhone 14 128GB", 330, 30, "Awaiting handover", 499, 9, []],
     ["Galaxy S22 256GB", 190, 21, "Listed", null, null, []],
     ["iPhone 13 mini", 175, 14, "Ready", null, null, [{ partId: screen13, name: "iPhone 13 OLED screen", unitCost: 62, qty: 1 }]],
     ["iPhone 12 Pro 128GB", 220, 6, "In repair", null, null, []],
